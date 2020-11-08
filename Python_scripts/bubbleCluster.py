@@ -134,7 +134,7 @@ def read_chrlength(chrLengthPath):
         lines = chrLength.readlines()
         for line in lines:
             chrdim.append(int(line.split(sep='\t')[1]))
-    return return chrdim
+    return chrdim
 
 def neighbor_ave_cpu(A, pad):
     if pad==0:
