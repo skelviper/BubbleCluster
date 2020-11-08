@@ -11,5 +11,12 @@ Here we present a modified  method based on scHiCluster which have better perfor
 
 ## Usage
 
+Your data structure should be like:
 
+
+
+## Todo
+
+1. New reducer, PCA for the raw matrix and UMAP for find cluster.
+2. 
 

@@ -1,57 +1,140 @@
 #######################
 #     Bubble Cluster  #
 #     @author zliu    #
-#     11/4/2020       #
+#     11/8/2020       #
 #######################
 
 '''
     Bubble cluster take the relative path of absolute contact matrix as input
 and ouput the umap reduction result, one has 2 dims for plot, the other has (cells-1)
 dims for clustering.
-    also create a ARIresult.txt with ARI for different dimentions.
+    Create a result.txt with ARI for different dimentions.
+
+    usage,check:
+        python bubbleCluster.py -h
 '''
 
 import os
 import sys
 import time
+import argparse
+import ast
+
 import numpy as np
 from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics.cluster import adjusted_rand_score as ARI
 from multiprocessing import Pool
-
-from multiprocessing import Pool
 from scipy.sparse import csr_matrix
 from scipy.stats import chi2_contingency
 from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans, SpectralClustering
-from sklearn.metrics.cluster import adjusted_rand_score as ARI
 
 import umap
 import hdbscan
+from sklearn.metrics import silhouette_score
 
 ########config########
-contactMatrixPath = sys.argv[1]
-res=1000000
-pad=1
-rp=0.5
-prct=20
-ndim=20
-ncpus=10 #I don't really know why but it seems that it will run out all of your cpus
+parser = argparse.ArgumentParser(description="BubbleCluster, a software for clustering single cell Hi-C data")
+parser.add_argument(
+                    "-i","--input",
+                    dest="contactMatrixPath",
+                    type=str,
+                    action="store",
+                    help="input folder path of contactMatrix"
+)
+
+parser.add_argument(
+                    "-r","--resolution",
+                    dest="res",
+                    type=int,
+                    action="store",
+                    default=1000000,
+                    help="resolution for bubbleCluster analysis,default to 1 megabase"
+)
+parser.add_argument(
+                    "-p","--pad",
+                    dest="pad",
+                    type=int,
+                    default=1,
+                    action="store",
+                    help="pad for convolution,default to 1, equal to 1 megabase when you set resolution it's default"
+)
+parser.add_argument(
+                    "--rp",
+                    dest="rp",
+                    type=int,
+                    defaut=0.5,
+                    action="store",
+                    help="random walk restart probability,default is 0.5"
+)
+parser.add_argument(
+                    "--prct",
+                    dest="prct",
+                    type=str,
+                    default=20,
+                    action="store",
+                    help="prct of the most significant contacts you use for PCA"
+)
+parser.add_argument(
+                    "-d","--ndim",
+                    dest="ndim",
+                    default=20,
+                    type=int,
+                    action="store",
+                    help="max dimentions"
+)
+parser.add_argument(
+                    "-t","--threads",
+                    dest="ncpus",
+                    type=int,
+                    default=48,
+                    action="store",
+                    help="total threads of your machine, notice that bubbleCluster draws all threads you have, manage it with smk",
+)
+parser.add_argument(
+    '-b','--benchmark',
+    help='Benchmark mode, defaut to true. This would read cell type name from your pairs file and calc ARI. Input should be either "True" or "False".',
+    type=ast.literal_eval,
+    dest='benchmark',
+)
+parser.add_argument(
+    '-l','--length',
+    help = 'read chromosome length from file',
+    type=str,
+    dest='chrLengthPath',
+)
+
+
+args = parser.parse_args()
+
 ######################
 
-######Global Vars#####
-status = 0
+########config########
+contactMatrixPath = args.contactMatrixPath
+res=args.res
+pad=args.pad
+rp=args.rp
+prct=args.prct
+ndim=args.ndim
+ncpus=args.ncpus
+benchmark=args.benchmark
+chrLengthPath=args.chrLengthPath
 ######################
 
+######################
 
-mm9dim = [197195432,181748087,159599783,155630120,152537259,149517037,152524553,131738871,124076172,129993255,121843856,121257530,120284312,125194864,103494974,98319150,95272651,90772031,61342430]
-hg19dim = [249250621,243199373,198022430,191154276,180915260,171115067,159138663,146364022,141213431,135534747,135006516,133851895,115169878,107349540,102531392,90354753,81195210,78077248,59128983,63025520,48129895,51304566,155270560]
-
-#sometimes contactMatrix directory may have files other than contactMatrix
+#sometimes contactMatrix directory may have files other than contactMatrix,for example .ipycheckpoints created by jupyter.
 def listdir_nohidden(path):
     for f in os.listdir(path):
         if not f.startswith('.'):
             yield f
+
+def read_chrlength(chrLengthPath):
+    chrdim = []
+    with open(chrLengthPath, 'r') as chrLength:
+        lines = chrLength.readlines()
+        for line in lines:
+            chrdim.append(int(line.split(sep='\t')[1]))
+    return return chrdim
 
 def neighbor_ave_cpu(A, pad):
     if pad==0:
@@ -82,7 +165,6 @@ def random_walk_cpu(A, rp):
     return Q
 
 def impute_cpu(args):
-    global status
     cell, ngene, pad, rp = args
     D = np.loadtxt(cell)
     A = csr_matrix((D[:, 2], (D[:, 0], D[:, 1])), shape = (ngene, ngene)).toarray()
@@ -92,9 +174,7 @@ def impute_cpu(args):
         Q = A[:]
     else:
         Q = random_walk_cpu(A, rp)
-    #output current status
-    print("finish cell impute: " + str(status))
-    status += 1
+    
     return [cell, Q.reshape(ngene*ngene)]
 
 def read_cell(filepath):
@@ -103,67 +183,116 @@ def read_cell(filepath):
     output: totalCellNumber, cellLabel in list, cell relative path
     '''
     totalCell = 0
-    label = []
     cellRelativePath = []
 
-    filenames = list(listdir_nohidden(filepath))
+    filenames = sorted(list(listdir_nohidden(filepath)))
     totalCell = len(filenames)
-    for filename in filenames:
-        label.append(filename.split(sep='.')[1])
-    
+
     for cellname in filenames:
         cellRelativePath.append(filepath + "/" + cellname)
 
-    return totalCell,label,cellRelativePath
+    return totalCell,cellRelativePath
 
-def umap_reduce_cluster(matrix,label):
+def read_label(filepath):
     '''
-    input: cell*n*n contact matrix
-    output: reduce matrix to cell*2(save) and cell*cell, cluster result show by ARI
+    read label is only use for testing performance, in this case, your contactMatrix(.conmat) file 
+    should have cell type in it.
     '''
-    reducer = umap.UMAP()
-    embedding = reducer.fit_transform(matrix)
-    np.save("embedding_plot",embedding)
+    label = []
 
-    reducer_cluster = umap.UMAP(n_components=50)
-    embedding_cluster = reducer_cluster.fit_transform(matrix)
-    
-    predict = hdbscan.HDBSCAN().fit_predict(embedding_cluster)
+    filenames = sorted(list(listdir_nohidden(filepath)))
 
-    return [ARI(label, list(hdbscan.HDBSCAN().fit_predict(embedding_cluster[:, :ndim]))) for ndim in [2,5,10,20,50]]
+    for filename in filenames:
+        #label.append("".join(filename.split(sep='_')[1:2]).split(sep=".")[0]) # for Tan's dataset
+        label.append(filename.split(sep='.')[1]) # for Ramani's dataset
+
+    return label
+
+
+def pca_reduce(matrix):
+    '''
+    input: ncell*n*n contact matrix 
+    output: pca reduced matrix to ncell*ncell, a list contain percentage of each PCs.
+
+    note: Come on, at least you have 30 cells right?
+    '''
+    reducer = PCA()
+    matrix_reduce = reducer.fit_transform(matrix)
+
+    return matrix_reduce,reducer.explained_variance_ratio_
+
+def dicide_optimised_pcs(pcaMatrix):
+    max_dim = 0
+    min_dim = 0
+
+    pca_dim_start = 10
+    mostSuitableMax = []
+    for i in range(pca_dim_start,round(totalCell*0.1)):
+        reducer_cluster = umap.UMAP()
+        embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
+        mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
+
+    max_dim = mostSuitableMax.index(max(mostSuitableMax))
+
+    mostSuitableMin = []
+    for i in range(5):
+        reducer_cluster = umap.UMAP()
+        embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,i:])
+        mostSuitableMin.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
+
+    min_dim = mostSuitableMin.index(max(mostSuitableMin))
+
+    return min_dim,max_dim
+
 
 def main():
-    ari = []
-    global res
-    chrTotalLength = sum(hg19dim)
+    chrLength = read_chrlength(chrLengthPath)
+    chrTotalLength = sum(chrLength)
     ngene = int(chrTotalLength / res)+1
 
     start_time = time.time()
 
-    totalCell,label,cellRelativePath = read_cell(contactMatrixPath)
+    totalCell,cellRelativePath = read_cell(contactMatrixPath)
 
     paras = [[cell, ngene, pad, rp] for cell in cellRelativePath]
-    p = Pool(ncpus)
-    result = p.map(impute_cpu, paras)
-    p.close()
+
+    result = []
+
+    for i in range(totalCell//ncpus+1):
+        with Pool(ncpus) as p:
+            result += p.map(impute_cpu,paras[i*ncpus:i*ncpus+ncpus])
 
     index = {x[0]:j for j,x in enumerate(result)}
-
     Q_concat = np.array([result[index[x]][1] for x in cellRelativePath])
+    del(result) #free memory
 
+    # needed to optimise for memory consumption
     if prct>-1:
         thres = np.percentile(Q_concat, 100 - prct, axis=1)
         Q_concat = (Q_concat > thres[:, None]) 
 
-    ari = umap_reduce_cluster(Q_concat,label)
+    pcaMatrix,varianceRatio = pca_reduce(Q_concat)
+    # end to modify
     
-    print(ari)
+    # save for protential later use
+    np.save("pcaMatrix",pcaMatrix)
+    np.savetxt("varianceRatio",varianceRatio)
     
-    ARIresFile = open('ARIresult.txt', 'w')
-    for i in ari:
-        ARIresFile.write(str(i))
-        ARIresFile.write('\n')
-    ARIresFile.close()
+    min_dim,max_dim = dicide_optimised_pcs(pcaMatrix)
+
+    reducer_umap = umap.UMAP()
+    embedding_cluster = reducer_umap.fit_transform(pcaMatrix[:,min_dim:max_dim])
+    np.save("umapMatrix",embedding_cluster)
+    
+    #benchmark
+    if (benchmark==True):
+        label = read_label(contactMatrixPath)
+        ari = ARI(label, list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)))
+
+        with open('ARIresult.txt', 'w') as ARIresFile:
+            ARIresFile.write("Benchmark mode, ARI is " + str(ari) + "\n")
+
+    
 
     end_time = time.time()
     print('Load and impute all cells with', end_time - start_time, 'seconds')
