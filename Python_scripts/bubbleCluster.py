@@ -5,10 +5,9 @@
 #######################
 
 '''
-    Bubble cluster take the relative path of absolute contact matrix as input
-and ouput the umap reduction result, one has 2 dims for plot, the other has (cells-1)
-dims for clustering.
-    Create a result.txt with ARI for different dimentions.
+    Bubble cluster take the relative path of absolute-pos contact matrix as input
+and ouput the reduction result for plot.
+    If you are using benchmark mode, it will create a result.txt with ARI indicate the cluster performance.
 
     usage,check:
         python bubbleCluster.py -h
@@ -62,7 +61,7 @@ parser.add_argument(
                     "--rp",
                     dest="rp",
                     type=int,
-                    defaut=0.5,
+                    default=0.5,
                     action="store",
                     help="random walk restart probability,default is 0.5"
 )
@@ -92,8 +91,9 @@ parser.add_argument(
 )
 parser.add_argument(
     '-b','--benchmark',
-    help='Benchmark mode, defaut to true. This would read cell type name from your pairs file and calc ARI. Input should be either "True" or "False".',
+    help='Benchmark mode, default to false. This would read cell type name from your pairs file and calc ARI. Input should be either "True" or "False".',
     type=ast.literal_eval,
+    default=False,
     dest='benchmark',
 )
 parser.add_argument(
@@ -222,25 +222,34 @@ def pca_reduce(matrix):
     return matrix_reduce,reducer.explained_variance_ratio_
 
 def dicide_optimised_pcs(pcaMatrix):
+    '''
+    after PCA reduction, it's important to use only main PCs for clustering so that
+    clustering results are not affected by random noise.
+    input: PCA reduced matrix with dim ncell*necll
+    output: min and max index for UMAP. 
+    '''
     max_dim = 0
     min_dim = 0
 
     pca_dim_start = 10
     mostSuitableMax = []
-    for i in range(pca_dim_start,round(totalCell*0.1)):
-        reducer_cluster = umap.UMAP()
+    for i in range(pca_dim_start,round(len(pcaMatrix)*0.05)):
+        reducer_cluster = umap.UMAP(random_state=42)
         embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
         mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
 
-    max_dim = mostSuitableMax.index(max(mostSuitableMax))
+    max_dim = mostSuitableMax.index(max(mostSuitableMax)) + pca_dim_start
+    #print(mostSuitableMax)
+
 
     mostSuitableMin = []
-    for i in range(5):
-        reducer_cluster = umap.UMAP()
-        embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,i:])
+    for j in range(5):
+        reducer_cluster = umap.UMAP(random_state=42)
+        embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,j:max_dim])
         mostSuitableMin.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
 
     min_dim = mostSuitableMin.index(max(mostSuitableMin))
+    #print(mostSuitableMin)
 
     return min_dim,max_dim
 
@@ -280,8 +289,10 @@ def main():
     
     min_dim,max_dim = dicide_optimised_pcs(pcaMatrix)
 
-    reducer_umap = umap.UMAP()
+    #because i want an reproducible result,so set random_state to 42
+    reducer_umap = umap.UMAP(random_state=42) 
     embedding_cluster = reducer_umap.fit_transform(pcaMatrix[:,min_dim:max_dim])
+
     np.save("umapMatrix",embedding_cluster)
     
     #benchmark
@@ -289,13 +300,14 @@ def main():
         label = read_label(contactMatrixPath)
         ari = ARI(label, list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)))
 
-        with open('ARIresult.txt', 'w') as ARIresFile:
-            ARIresFile.write("Benchmark mode, ARI is " + str(ari) + "\n")
+        with open('result.txt', 'w') as resFile:
+            resFile.write("Benchmark mode, ARI is " + str(ari) + "\n")
+            resFile.write("PCs selected are {} to {} \n".format(str(min_dim),str(max_dim)))
+            end_time = time.time()
+            resFile.write('Load and impute all cells with', end_time - start_time, 'seconds')
 
     
-
-    end_time = time.time()
-    print('Load and impute all cells with', end_time - start_time, 'seconds')
+    
 
 if __name__ == "__main__":
     main()
