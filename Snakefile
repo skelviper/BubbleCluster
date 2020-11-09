@@ -6,8 +6,12 @@ def listdir_nohidden(path):
             yield f
             
 SAMPLES = list(listdir_nohidden("./pairs"))
+
 ##############CONFIG################
-BubbleClusterPath = ""
+BubblePath="/share/home/zliu/test/schicluster/BubbleCluster/"
+nCPUS = 90
+####################################
+
 
 #############RULE_ALL###############
 #this part decide how far you want to go
@@ -15,12 +19,12 @@ rule all:
     input:
         expand("absPairs/{sample}.abs",sample=SAMPLES),
         expand("contactMatrix/{sample}.conmat",sample=SAMPLES),
-        expand("ARIresult.txt")
+        expand("result.txt")
 ############END_rule_all############
 
 rule pairs2abs:
     input:
-        chrLength="/share/home/zliu/test/schicluster/benchmark/scriptsAndFiles/chr.len.hg19.tsv",
+        chrLength="{BubblePath}otherFiles/chr.len.hg19.tsv",
         pairs="pairs/{sample}",
     output: 
         abs="absPairs/{sample}.abs"
@@ -35,7 +39,7 @@ rule pairs2abs:
             mkdir absPairs
         fi
 
-        Rscript {BubbleClusterPath}}/R_scripts/pairs2abs.R {input.chrLength} {input.pairs} {output.abs}
+        Rscript {BubblePath}R_scripts/pairs2abs.R {input.chrLength} {input.pairs} {output.abs}
 
         set +u
         conda deactivate
@@ -59,7 +63,7 @@ rule abs2conMatrix:
             mkdir contactMatrix
         fi
         
-        Rscript {BubbleClusterPath}}/R_scripts/abs2conMatrix.R {params.resolution} {input.abs} {output.conmat}
+        Rscript {BubblePath}R_scripts/pairs2abs.R {params.resolution} {input.abs} {output.conmat}
 
         set +u
         conda deactivate
@@ -70,18 +74,16 @@ rule cluster:
     input:
         expand("contactMatrix/{sample}.conmat",sample=SAMPLES)
     output:
-        ari="ARIresult.txt"
-    params:
-        contactMatrixPath="contactMatrix/",
-    threads: 90
+        ari="result.txt"
+    threads:nCPUS
     shell:"""
         set +u 
         source activate
         conda activate schicluster
         set -u
         
-        python /share/home/zliu/test/schicluster/benchmark/scriptsAndFiles/bubbleCluster.py {params.contactMatrixPath}
-        
+        python {BubblePath}Python_scripts/bubbleCluster.py -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
+
         set +u
         conda deactivate
         set -u

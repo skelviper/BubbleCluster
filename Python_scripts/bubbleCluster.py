@@ -219,6 +219,9 @@ def pca_reduce(matrix):
     reducer = PCA()
     matrix_reduce = reducer.fit_transform(matrix)
 
+    #ipca = IncrementalPCA(batch_size=ncpus)
+    #X_ipca = ipca.fit_transform(X)
+
     return matrix_reduce,reducer.explained_variance_ratio_
 
 def dicide_optimised_pcs(pcaMatrix):
