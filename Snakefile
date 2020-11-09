@@ -82,7 +82,7 @@ rule cluster:
         conda activate schicluster
         set -u
         
-        python {BubblePath}Python_scripts/bubbleCluster.py -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
+        python {BubblePath}Python_scripts/bubbleCluster.py -b True -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
 
         set +u
         conda deactivate
