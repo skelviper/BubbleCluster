@@ -15,8 +15,11 @@ Your data structure should be like:
 
 
 
+
+
 ## Todo
 
-1. New reducer, PCA for the raw matrix and UMAP for find cluster.
-2. 
+1. Optimize PCA and percentile parts, consume less memory.
+2. Output cluster result.
+3. Use this methods to other datasets.
 
