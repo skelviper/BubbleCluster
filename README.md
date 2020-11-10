@@ -19,18 +19,22 @@ For Python, my bubbleCluster environment is in `./env/bubble.yaml`, you can inst
 
 Before you run bubblecluster, your folder structure should be like:
 
->[zliu@mgt interWithintra]$ tree -h
->.
->├── [ 28K]  pairs
->│   ├── [871K]  AACGGTCG_ATCGACGA.HeLa.pairs
->│   ├── [409K]  AACGGTCG_CAGTCCAA.HeLa.pairs
->……
->│   ├── [2.7M]  TTGTGCCG_TGAGGCAA.HAP1.pairs
->│   ├── [481K]  TTGTGCCG_TGGCAGTT.HAP1.pairs
->│   └── [1.0M]  TTGTGCCG_TTAATCGA.HAP1.pairs
->├── [ 129]  runSnake.sh
->├── [2.1K]  Snakefile
->└── [614K]  vis.ipynb
+```
+[zliu@mgt interWithintra]$ tree -h
+.
+├── [ 28K]  pairs
+│   ├── [871K]  AACGGTCG_ATCGACGA.HeLa.pairs
+│   ├── [409K]  AACGGTCG_CAGTCCAA.HeLa.pairs
+……
+│   ├── [2.7M]  TTGTGCCG_TGAGGCAA.HAP1.pairs
+│   ├── [481K]  TTGTGCCG_TGGCAGTT.HAP1.pairs
+│   └── [1.0M]  TTGTGCCG_TTAATCGA.HAP1.pairs
+├── [ 129]  runSnake.sh
+├── [2.1K]  Snakefile
+└── [614K]  vis.ipynb
+```
+
+
 
 First you should modify Snakefile, this is the pipeline of bubbleCluster,  it generate contact matrix with absolute position and run bubbleCluster with it's default parameters.
 
