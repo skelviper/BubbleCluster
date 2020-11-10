@@ -24,7 +24,7 @@ rule all:
 
 rule pairs2abs:
     input:
-        chrLength="{BubblePath}otherFiles/chr.len.hg19.tsv",
+        chrLength=BubblePath + "otherFiles/chr.len.hg19.tsv",
         pairs="pairs/{sample}",
     output: 
         abs="absPairs/{sample}.abs"
@@ -63,7 +63,7 @@ rule abs2conMatrix:
             mkdir contactMatrix
         fi
         
-        Rscript {BubblePath}R_scripts/pairs2abs.R {params.resolution} {input.abs} {output.conmat}
+        Rscript {BubblePath}R_scripts/abs2conMatrix.R {params.resolution} {input.abs} {output.conmat}
 
         set +u
         conda deactivate
@@ -75,14 +75,14 @@ rule cluster:
         expand("contactMatrix/{sample}.conmat",sample=SAMPLES)
     output:
         ari="result.txt"
-    threads:nCPUS
+    threads: nCPUs
     shell:"""
         set +u 
         source activate
         conda activate schicluster
         set -u
         
-        python {BubblePath}Python_scripts/bubbleCluster.py -b True -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
+        python {BubblePath}Python_scripts/bubbleCluster.py --rp -1 --pad 0 -b True -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
 
         set +u
         conda deactivate

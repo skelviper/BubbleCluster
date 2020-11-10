@@ -1,7 +1,7 @@
 #######################
 #     Bubble Cluster  #
 #     @author zliu    #
-#     11/8/2020       #
+#     11/10/2020       #
 #######################
 
 '''
@@ -307,7 +307,7 @@ def main():
             resFile.write("Benchmark mode, ARI is " + str(ari) + "\n")
             resFile.write("PCs selected are {} to {} \n".format(str(min_dim),str(max_dim)))
             end_time = time.time()
-            resFile.write('Load and impute all cells with', end_time - start_time, 'seconds')
+            resFile.write('Load and impute all cells with '+str(end_time - start_time)+' seconds')
 
     
     
