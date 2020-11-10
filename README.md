@@ -44,34 +44,16 @@ chmod +x runSnake.sh
 
 And here are what you got:
 
->[zliu@mgt interWithintra]$ tree -h
->.
->├── [ 32K]  absPairs
->│   ├── [906K]  AACGGTCG_ATCGACGA.HeLa.pairs.abs
->│   ├── [421K]  AACGGTCG_CAGTCCAA.HeLa.pairs.abs
->……
->│   ├── [498K]  TTGTGCCG_TGGCAGTT.HAP1.pairs.abs
->│   └── [1.1M]  TTGTGCCG_TTAATCGA.HAP1.pairs.abs
->├── [ 32K]  contactMatrix
->│   ├── [ 99K]  AACGGTCG_ATCGACGA.HeLa.pairs.conmat
->│   ├── [ 56K]  AACGGTCG_CAGTCCAA.HeLa.pairs.conmat
->│   ├── [ 71K]  AAGCCGGT_ATACATGT.HAP1.pairs.conmat
->……
->│   ├── [236K]  TTGTGCCG_TGAGGCAA.HAP1.pairs.conmat
->│   ├── [ 71K]  TTGTGCCG_TGGCAGTT.HAP1.pairs.conmat
->│   └── [113K]  TTGTGCCG_TTAATCGA.HAP1.pairs.conmat
->├── [ 28K]  pairs
->│   ├── [871K]  AACGGTCG_ATCGACGA.HeLa.pairs
->│   ├── [409K]  AACGGTCG_CAGTCCAA.HeLa.pairs
->……
->│   ├── [2.7M]  TTGTGCCG_TGAGGCAA.HAP1.pairs
->│   ├── [481K]  TTGTGCCG_TGGCAGTT.HAP1.pairs
->│   └── [1.0M]  TTGTGCCG_TTAATCGA.HAP1.pairs
->├── [ 129]  runSnake.sh
->├── [2.1K]  Snakefile
->└── [614K]  vis.ipynb
+```
+(base) [zliu@mgt interChromosome]$ ls
+absPairs  contactMatrix  pairs  pcaMatrix.npy  result.txt  runSnake.sh  Snakefile  umapMatrix.npy  varianceRatio  vis.ipynb
+```
 
+Use vis.ipynb to visualize your result.
 
+Here is an example:
+
+![umap result](README/image-20201110154837949.png)
 
 bubbleCluster can be used separately with out the snakemake workflow I described above:
 
