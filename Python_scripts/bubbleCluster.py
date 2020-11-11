@@ -69,9 +69,9 @@ parser.add_argument(
                     "--prct",
                     dest="prct",
                     type=str,
-                    default=20,
+                    default=1,
                     action="store",
-                    help="prct of the most significant contacts you use for PCA"
+                    help="prct of the most significant contacts you use for PCA,default to 1"
 )
 parser.add_argument(
                     "-d","--ndim",
