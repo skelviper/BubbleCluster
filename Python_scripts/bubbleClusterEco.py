@@ -1,7 +1,7 @@
 #######################
 #     Bubble Cluster  #
 #     @author zliu    #
-#     11/13/2020       #
+#     11/14/2020       #
 #######################
 
 '''
@@ -32,6 +32,7 @@ from sklearn.decomposition import PCA
 import umap
 import hdbscan
 from sklearn.metrics import silhouette_score
+import pandas as pd
 
 ########config########
 parser = argparse.ArgumentParser(description="BubbleCluster, a software for clustering single cell Hi-C data")
@@ -288,7 +289,6 @@ def main():
     del(result) #free memory
 
     pcaMatrix,varianceRatio = pca_reduce(Q_concat)
-    # end to modify
     
     # save for protential later use
     np.save("pcaMatrix",pcaMatrix)
@@ -301,6 +301,14 @@ def main():
     embedding_cluster = reducer_umap.fit_transform(pcaMatrix[:,min_dim:max_dim])
 
     np.save("umapMatrix",embedding_cluster)
+
+    #save clustering results to tsv
+    cellnames = []
+    for i in sorted(list(listdir_nohidden("./contactMatrix/"))):
+        cellnames.append(i.strip('.conmat'))
+    clusteringRes = pd.DataFrame(np.array([cellnames,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster))])).T
+    clusteringRes.columns = ['pairsFile','cluster']
+    clusteringRes.to_csv("clusterRes.tsv",sep='\t')
     
     #benchmark
     if (benchmark==True):
