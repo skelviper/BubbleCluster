@@ -99,17 +99,5 @@ optional arguments:
 
 ## Todo
 
-1. Optimize PCA and percentile parts, consume less memory.
-
-   > For dataset with 628 cells, 100+GB of RAM is needed.
-
-2. Bugs  in consume too much CPU resources
-
-   > This is a big issue, but for now I don't know how to deal with it.
-   >
-   > For example, I have 2 compute node with 96 cores and 400GB of RAM each. If input threads is 90 in snakemake then you can't use 90 in python script. 90-5 I recommend.  Even so, bubbleCluster would still consume all your 90 cores provided.
-
-3. Output cluster result.
-
-4. This methods is only tested in Ramani,2017 dataset. Use this methods to other datasets is needed.
+1. This methods is only tested in Ramani,2017 dataset. Use this methods to other datasets is needed.
 

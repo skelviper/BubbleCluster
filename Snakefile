@@ -8,8 +8,8 @@ def listdir_nohidden(path):
 SAMPLES = list(listdir_nohidden("./pairs"))
 
 ##############CONFIG################
-BubblePath="/share/home/zliu/test/schicluster/BubbleCluster/"
-nCPUS = 90
+BubblePath="/share/home/zliu/project/gradProject/BubbleCluster/"
+nCPUs = 90
 ####################################
 
 
@@ -82,10 +82,9 @@ rule cluster:
         conda activate schicluster
         set -u
         
-        python {BubblePath}Python_scripts/bubbleCluster.py --rp -1 --pad 0 -b True -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
+        python {BubblePath}Python_scripts/bubbleClusterEco.py -b True -i contactMatrix/ -t $[{threads}-5] -l {BubblePath}otherFiles/chr.len.hg19.tsv
 
         set +u
         conda deactivate
         set -u
     """
-    

@@ -27,7 +27,7 @@ from sklearn.metrics.cluster import adjusted_rand_score as ARI
 from multiprocessing import Pool
 from scipy.sparse import csr_matrix
 from scipy.stats import chi2_contingency
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 
 import umap
 import hdbscan
@@ -232,7 +232,7 @@ def pca_reduce(matrix):
     ipcareducer = IncrementalPCA(batch_size=ncpus)
     matrix_reduce = ipcareducer.fit_transform(matrix)
 
-    return matrix_reduce,reducer.explained_variance_ratio_
+    return matrix_reduce,ipcareducer.explained_variance_ratio_
 
 def dicide_optimised_pcs(pcaMatrix):
     '''
