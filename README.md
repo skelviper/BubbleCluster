@@ -101,3 +101,16 @@ optional arguments:
 
 1. This methods is only tested in Ramani,2017 dataset. Use this methods to other datasets is needed.
 
+## Common Q&A
+
+1. How to select PCs?
+
+By default, BubbleCluster use silhouette score to determine the best PCs select, this is the easy way but may cause "false cluster" results. I run a benchmark with different PCs from Ramani 2017 dataset, inter chromosomal contacts only can achieve best performance but intra chromosomal contacts only can have better performance with the first few PCs. 
+
+Unfortunately, currently there are still few single-cell Hi-C datasets and single cell Hi-C data cannot easily acquired by downsampled from bulk. I hope HIRES project(scRNA-seq combine with Hi-C) in our lab can provide a better dataset to test Bubble Cluster. 
+
+Inspired by Seurat, JackStraw procedure may tell us how to choose. But that's beyond my ability and it is not the focus of my current work. Different PCs select for down stream analysis is encouraged.
+
+2. Error in repeating Tan2018 dataset
+
+Tan2018 dataset has only 34 cell and no significant cluster can be found. This cause error exit. But you can still visualize results by using vis.ipynb and pcaMatrix.

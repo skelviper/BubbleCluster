@@ -213,8 +213,8 @@ def read_label(filepath):
     filenames = sorted(list(listdir_nohidden(filepath)))
 
     for filename in filenames:
-        #label.append("".join(filename.split(sep='_')[1:2]).split(sep=".")[0]) # for Tan's dataset
-        label.append(filename.split(sep='.')[1]) # for Ramani's dataset
+        label.append("".join(filename.split(sep='_')[1:2]).split(sep=".")[0]) # for Tan's dataset
+        #label.append(filename.split(sep='.')[1]) # for Ramani's dataset
 
     return label
 
@@ -244,12 +244,18 @@ def dicide_optimised_pcs(pcaMatrix):
     max_dim = 0
     min_dim = 0
 
-    pca_dim_start = 10
+    pca_dim_start = 6
     mostSuitableMax = []
-    for i in range(pca_dim_start,round(len(pcaMatrix)*0.05)):
-        reducer_cluster = umap.UMAP(random_state=42)
-        embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
-        mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
+    if len(pcaMatrix)*0.05<20:
+        for i in range(pca_dim_start,20):
+            reducer_cluster = umap.UMAP(random_state=42)
+            embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
+            mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
+    else: 
+        for i in range(pca_dim_start,round(len(pcaMatrix)*0.05)):
+            reducer_cluster = umap.UMAP(random_state=42)
+            embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
+            mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
 
     max_dim = mostSuitableMax.index(max(mostSuitableMax)) + pca_dim_start
     #print(mostSuitableMax)
