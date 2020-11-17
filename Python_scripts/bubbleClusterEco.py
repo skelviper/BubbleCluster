@@ -250,11 +250,15 @@ def dicide_optimised_pcs(pcaMatrix):
         for i in range(pca_dim_start,20):
             reducer_cluster = umap.UMAP(random_state=42)
             embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
+            if len(set(list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)))) == 1:
+                continue
             mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
     else: 
         for i in range(pca_dim_start,round(len(pcaMatrix)*0.05)):
             reducer_cluster = umap.UMAP(random_state=42)
             embedding_cluster = reducer_cluster.fit_transform(pcaMatrix[:,0:i])
+            if len(set(list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)))) == 1:
+                continue
             mostSuitableMax.append(silhouette_score(embedding_cluster,list(hdbscan.HDBSCAN().fit_predict(embedding_cluster)),metric='euclidean'))
 
     max_dim = mostSuitableMax.index(max(mostSuitableMax)) + pca_dim_start
