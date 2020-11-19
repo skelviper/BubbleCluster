@@ -114,3 +114,13 @@ Inspired by Seurat, JackStraw procedure may tell us how to choose. But that's be
 2. Error in repeating Tan2018 dataset
 
 Tan2018 dataset has only 34 cell and no significant cluster can be found. This cause error exit. But you can still visualize results by using vis.ipynb and pcaMatrix.
+
+3. Error in impute_cpu
+
+The error message could be like this: 
+
+> A = csr_matrix((D[:,2]))……
+>
+> IndexError: too many indices for array : array is 1-dimensional, but 2 were indexed.
+
+This is often caused by too few contacts in your contact matrix, I recommand at least 5000 contacts/cell for a good cluster result.
