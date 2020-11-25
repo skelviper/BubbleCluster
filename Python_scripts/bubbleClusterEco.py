@@ -170,6 +170,7 @@ def random_walk_cpu(A, rp):
 def impute_cpu(args):
     cell, ngene, pad, rp = args
     D = np.loadtxt(cell)
+    print(cell)
     A = csr_matrix((D[:, 2], (D[:, 0], D[:, 1])), shape = (ngene, ngene)).toarray()
     A = np.log2(A + A.T + 1)
     A = neighbor_ave_cpu(A, pad)
@@ -229,10 +230,10 @@ def pca_reduce(matrix):
     #reducer = PCA()
     #matrix_reduce = reducer.fit_transform(matrix)
 
-    ipcareducer = IncrementalPCA(batch_size=ncpus)
-    matrix_reduce = ipcareducer.fit_transform(matrix)
+    iPcaReducer = IncrementalPCA(batch_size=3*ncpus)
+    matrix_reduce = iPcaReducer.fit_transform(matrix)
 
-    return matrix_reduce,ipcareducer.explained_variance_ratio_
+    return matrix_reduce,iPcaReducer.explained_variance_ratio_
 
 def dicide_optimised_pcs(pcaMatrix):
     '''
@@ -244,7 +245,7 @@ def dicide_optimised_pcs(pcaMatrix):
     max_dim = 0
     min_dim = 0
 
-    pca_dim_start = 6
+    pca_dim_start = 1
     mostSuitableMax = []
     if len(pcaMatrix)*0.05<20:
         for i in range(pca_dim_start,20):
@@ -302,6 +303,7 @@ def main():
     
     # save for protential later use
     np.save("pcaMatrix",pcaMatrix)
+    np.savetxt("pcaMatrix",pcaMatrix)
     np.savetxt("varianceRatio",varianceRatio)
     
     min_dim,max_dim = dicide_optimised_pcs(pcaMatrix)
@@ -311,6 +313,7 @@ def main():
     embedding_cluster = reducer_umap.fit_transform(pcaMatrix[:,min_dim:max_dim])
 
     np.save("umapMatrix",embedding_cluster)
+    np.savetxt("umapMatrix",embedding_cluster)
 
     #save clustering results to tsv
     cellnames = []
@@ -327,6 +330,11 @@ def main():
 
         with open('result.txt', 'w') as resFile:
             resFile.write("Benchmark mode, ARI is " + str(ari) + "\n")
+            resFile.write("PCs selected are {} to {} \n".format(str(min_dim),str(max_dim)))
+            end_time = time.time()
+            resFile.write('Load and impute all cells with '+str(end_time - start_time)+' seconds')
+    else:
+        with open('result.txt', 'w') as resFile:
             resFile.write("PCs selected are {} to {} \n".format(str(min_dim),str(max_dim)))
             end_time = time.time()
             resFile.write('Load and impute all cells with '+str(end_time - start_time)+' seconds')

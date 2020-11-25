@@ -97,9 +97,7 @@ optional arguments:
 
 
 
-## Todo
 
-1. This methods is only tested in Ramani,2017 dataset. Use this methods to other datasets is needed.
 
 ## Common Q&A
 
@@ -123,4 +121,8 @@ The error message could be like this:
 >
 > IndexError: too many indices for array : array is 1-dimensional, but 2 were indexed.
 
-This is often caused by too few contacts in your contact matrix, I recommand at least 5000 contacts/cell for a good cluster result.
+This is often caused by too few contacts in your contact matrix, I recommend at least 5000 contacts/cell for a good cluster result.
+
+4. How's this new method performed on different dataset?
+
+So far I have tested it on 4 different dataset, for low contacts count dataset like Ramani2017 Flaymer2017, BubbleCluster perform better. But on Tan2018/ Tan 2020 dataset, Tan's CpG method perform better. Considering no one have such low contacts these days…… Bubble Cluster just got behind at birth. (Hope this project can get me pass to get my bachelor degree)
